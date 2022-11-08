@@ -8,5 +8,6 @@ The text does not dynamically change with the window size, and the window size i
 
 Current Issues:
 
-- Gray Background for the main Label "Hello There". The background seems to default based on the current light or dark theme applied to macOS.
+- Gray Background for the main Label "Hello There".
 - Gray Background for the Set Text input field, Set Text button, Set Color dropdown menu, Set Color button, and Reverse Text button.
+  - Note: The backgrounds defaulting to gray seems to be based on the current light or dark theme applied to macOS. Needs to be looked into via tkinter documentation.
