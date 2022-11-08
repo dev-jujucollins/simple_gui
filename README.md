@@ -10,4 +10,3 @@ Current Issues:
 
 - Gray Background for the main Label "Hello There". The background seems to default based on the current light or dark theme applied to macOS.
 - Gray Background for the Set Text input field, Set Text button, Set Color dropdown menu, Set Color button, and Reverse Text button.
--
