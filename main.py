@@ -16,7 +16,7 @@ class App:
             background="white",  # this seems to be dependent on the macOS them(light or dark)
             font=("Brass Mono", 30),
         )
-        self.text.grid(row=0, column=0)  # positioning of "Hello There"
+        self.text.grid(row=0, column=0)  # positioning of Heading Area
 
         # creating and positioning the set text field
         self.set_text_field = ttk.Entry(self.mainframe)
