@@ -10,4 +10,4 @@ Current Issues:
 
 - Gray Background for the main Label "Hello There".
 - Gray Background for the Set Text input field, Set Text button, Set Color dropdown menu, Set Color button, and Reverse Text button.
-  - Note: The backgrounds defaulting to gray seems to be based on the current light or dark theme applied to macOS. Needs to be looked into via tkinter documentation.
+  - Note: The backgrounds defaulting to gray seems to be based on the current light or dark theme applied to macOS. Needs to be looked into via tkinter documentation. Size of the drop-down menus also slightly changes when the macOS them is changed from light mode to dark mode. When in dark mode, the box extends closer to the border of the window.

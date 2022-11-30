@@ -7,13 +7,13 @@ class App:
         self.root = tk.Tk()  # creates top level widget aka main window of the app
         self.root.geometry("400x400")  # window size
         self.root.title("Text App")  # title
-        self.mainframe = tk.Frame(self.root, background="white")
+        self.mainframe = tk.Frame(self.root, highlightbackground="white")
         self.mainframe.pack(fill="both", expand=True)
 
         self.text = ttk.Label(
             self.mainframe,
-            text="Hello There",
-            background="black",  # this seems to be dependent on the macOS them(light or dark)
+            text="Julius",
+            background="white",  # this seems to be dependent on the macOS them(light or dark)
             font=("Brass Mono", 30),
         )
         self.text.grid(row=0, column=0)  # positioning of "Hello There"
