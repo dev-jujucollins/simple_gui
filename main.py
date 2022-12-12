@@ -57,8 +57,8 @@ class App:
 
     def reverse(self):
         new_text = self.text.cget("text")
-        reverse = new_text[::-1]
-        self.text.config(text=reverse)
+        reverse_text = new_text[::-1]
+        self.text.config(text=reverse_text)
 
 
 if __name__ == "__main__":
