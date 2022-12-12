@@ -12,7 +12,7 @@ class App:
 
         self.text = ttk.Label(
             self.mainframe,
-            text="Sample Text Gui",
+            text="Sample Text",
             background="white",  # this seems to be dependent on the macOS them(light or dark)
             font=("Brass Mono", 30),
         )
