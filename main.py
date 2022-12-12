@@ -48,17 +48,17 @@ class App:
 
     # functions to perform the button actions: set text, set color, reverse text
     def set_text(self):
-        newText = self.set_text_field.get()
-        self.text.config(text=newText)
+        new_text = self.set_text_field.get()
+        self.text.config(text=new_text)
 
     def set_color(self):
-        newColor = self.set_color_field.get()
-        self.text.config(foreground=newColor)
+        new_color = self.set_color_field.get()
+        self.text.config(foreground=new_color)
 
     def reverse(self):
-        newText = self.text.cget("text")
-        reversed = newText[::-1]
-        self.text.config(text=reversed)
+        new_text = self.text.cget("text")
+        reverse = new_text[::-1]
+        self.text.config(text=reverse)
 
 
 if __name__ == "__main__":
