@@ -3,7 +3,7 @@ from tkinter import ttk
 
 
 class App:
-    def __init__(self) -> object:
+    def __init__(self) -> None:
         self.root = tk.Tk()  # creates top level widget aka main window of the app
         self.root.geometry("400x400")  # window size
         self.root.title("Text App")  # title
