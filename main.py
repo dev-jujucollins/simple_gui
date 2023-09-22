@@ -13,7 +13,8 @@ class App:
         self.text = ttk.Label(
             self.mainframe,
             text="Sample Text",
-            background="white",  # this seems to be dependent on the macOS them(light or dark)
+            background="white",
+            # this seems to be dependent on the macOS them(light or dark)
             font=("Brass Mono", 30),
         )
         self.text.grid(row=0, column=0)  # positioning of Heading Area
