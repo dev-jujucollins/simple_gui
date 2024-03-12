@@ -62,5 +62,7 @@ class App:
         self.text.config(text=reverse_text)
 
 
-if __name__ == "__main__":
+if __name__ != "__main__":
+    pass
+else:
     App()
