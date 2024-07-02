@@ -1,6 +1,6 @@
 # simple_gui
 
-This is a simple app with a Graphic User Interface using tkinter in Python3. This was just a small project to explore tkinter.
+This is a simple app with a Graphic User Interface using tkinter in Python3. This was just a small project to explore tkinter. May expand this to something larger at a later time.
 This app allows you to set the text in the main text field to anything you want, allows you to change the color of the text, and reverse the text to display backwards as well.
 The text does not dynamically change with the window size, and the window size is preset to be 400x400.
 
