@@ -1,167 +1,549 @@
-import tkinter as tk
-from tkinter import ttk
+from __future__ import annotations
+
+import logging
+import sys
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QFont, QKeySequence, QPalette, QShortcut
+from PySide6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFrame,
+    QGridLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QSlider,
+    QWidget,
+)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-class App:
+class UIConfig:
+    WINDOW_WIDTH: int = 650
+    WINDOW_HEIGHT: int = 550
+    MIN_WIDTH: int = 500
+    MIN_HEIGHT: int = 450
+    TITLE: str = "Text App"
+    MAIN_PADDING: int = 20
+    SECTION_PADDING: int = 15
+    DISPLAY_PADDING: int = 20
+    TEXT_DEFAULT: str = "Sample Text"
+    TEXT_FONT_SIZE: int = 36
+    TEXT_FONT_WEIGHT: QFont.Weight = QFont.Weight.Bold
+    ENTRY_FONT_SIZE: int = 14
+    LABEL_FONT_SIZE: int = 13
+    BUTTON_FONT_SIZE: int = 13
+    SLIDER_MIN: int = 16
+    SLIDER_MAX: int = 64
+    COLOR_OPTIONS: list[str] = [
+        "red",
+        "blue",
+        "green",
+        "black",
+        "white",
+        "purple",
+        "orange",
+        "pink",
+        "cyan",
+        "yellow",
+        "magenta",
+        "gray",
+    ]
+
+
+# --- Dark / Light Palette Definitions ---
+
+_DARK_COLORS: dict[QPalette.ColorRole, str] = {
+    QPalette.ColorRole.Window: "#1e1e1e",
+    QPalette.ColorRole.WindowText: "#e0e0e0",
+    QPalette.ColorRole.Base: "#2b2b2b",
+    QPalette.ColorRole.AlternateBase: "#333333",
+    QPalette.ColorRole.Text: "#e0e0e0",
+    QPalette.ColorRole.Button: "#333333",
+    QPalette.ColorRole.ButtonText: "#e0e0e0",
+    QPalette.ColorRole.Highlight: "#3498db",
+    QPalette.ColorRole.HighlightedText: "#ffffff",
+    QPalette.ColorRole.PlaceholderText: "#888888",
+}
+
+_LIGHT_COLORS: dict[QPalette.ColorRole, str] = {
+    QPalette.ColorRole.Window: "#f5f5f5",
+    QPalette.ColorRole.WindowText: "#1a1a1a",
+    QPalette.ColorRole.Base: "#ffffff",
+    QPalette.ColorRole.AlternateBase: "#f0f0f0",
+    QPalette.ColorRole.Text: "#1a1a1a",
+    QPalette.ColorRole.Button: "#e0e0e0",
+    QPalette.ColorRole.ButtonText: "#1a1a1a",
+    QPalette.ColorRole.Highlight: "#3498db",
+    QPalette.ColorRole.HighlightedText: "#ffffff",
+    QPalette.ColorRole.PlaceholderText: "#999999",
+}
+
+
+def _build_palette(colors: dict[QPalette.ColorRole, str]) -> QPalette:
+    palette = QPalette()
+    for role, hex_color in colors.items():
+        palette.setColor(role, QColor(hex_color))
+    return palette
+
+
+DARK_PALETTE = _build_palette(_DARK_COLORS)
+LIGHT_PALETTE = _build_palette(_LIGHT_COLORS)
+
+
+# --- Style Sheets ---
+
+_COMMON_BUTTON_STYLE = """
+    QPushButton {{
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: {font_size}px;
+        font-weight: bold;
+        color: #ffffff;
+        background-color: {bg};
+    }}
+    QPushButton:hover {{
+        background-color: {hover};
+    }}
+    QPushButton:pressed {{
+        background-color: {pressed};
+    }}
+"""
+
+
+def _btn_style(bg: str, hover: str, pressed: str | None = None) -> str:
+    return _COMMON_BUTTON_STYLE.format(
+        font_size=UIConfig.BUTTON_FONT_SIZE,
+        bg=bg,
+        hover=hover,
+        pressed=pressed or hover,
+    )
+
+
+DISPLAY_FRAME_DARK = "QFrame { background-color: #2b2b2b; border-radius: 12px; }"
+DISPLAY_FRAME_LIGHT = "QFrame { background-color: #f0f0f0; border-radius: 12px; }"
+
+ENTRY_STYLE = """
+    QLineEdit {{
+        border: 1px solid {border};
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: {font_size}px;
+        background-color: {bg};
+        color: {fg};
+    }}
+    QLineEdit:focus {{
+        border: 2px solid #3498db;
+    }}
+"""
+
+COMBO_STYLE = """
+    QComboBox {{
+        border: 1px solid {border};
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: {font_size}px;
+        background-color: {bg};
+        color: {fg};
+    }}
+    QComboBox::drop-down {{
+        border: none;
+        padding-right: 10px;
+    }}
+    QComboBox QAbstractItemView {{
+        background-color: {bg};
+        color: {fg};
+        selection-background-color: #3498db;
+        selection-color: #ffffff;
+    }}
+"""
+
+SLIDER_STYLE = """
+    QSlider::groove:horizontal {
+        border: none;
+        height: 6px;
+        background: %(groove)s;
+        border-radius: 3px;
+    }
+    QSlider::handle:horizontal {
+        background: #3498db;
+        width: 18px;
+        height: 18px;
+        margin: -6px 0;
+        border-radius: 9px;
+    }
+    QSlider::handle:horizontal:hover {
+        background: #2980b9;
+    }
+    QSlider::sub-page:horizontal {
+        background: #3498db;
+        border-radius: 3px;
+    }
+"""
+
+THEME_BUTTON_STYLE = """
+    QPushButton {{
+        border: 2px solid {border};
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 12px;
+        background-color: transparent;
+        color: {fg};
+    }}
+    QPushButton:hover {{
+        background-color: {hover_bg};
+    }}
+"""
+
+
+class App(QMainWindow):
+    """GUI application for text manipulation with PySide6.
+
+    Features:
+    - Text input and display
+    - Color customization
+    - Text reversal
+    - Dark/Light theme toggle
+    - Keyboard shortcuts
+    """
+
     def __init__(self) -> None:
-        self.root = tk.Tk()  # creates top level widget aka main window of the app
-        self.root.geometry("600x500")  # larger initial window size
-        self.root.minsize(500, 400)  # minimum window size
-        self.root.title("Modern Text App")  # updated title
-        self.root.configure(bg="#f0f0f0")  # light gray background
-        
-        # Main container with padding
-        self.mainframe = tk.Frame(self.root, bg="#ffffff", relief=tk.FLAT, bd=0)
-        self.mainframe.pack(fill="both", expand=True, padx=20, pady=20)
-        
-        # Configure grid weights for responsive layout
-        self.mainframe.columnconfigure(0, weight=3)
-        self.mainframe.columnconfigure(1, weight=1)
-        self.mainframe.rowconfigure(0, weight=2)
-        self.mainframe.rowconfigure(1, weight=0)
-        self.mainframe.rowconfigure(2, weight=0)
-        self.mainframe.rowconfigure(3, weight=0)
-        self.mainframe.rowconfigure(4, weight=0)
+        super().__init__()
+        self.text_history: list[str] = []
+        self._is_dark = True
 
-        # Display area frame with border
-        display_frame = tk.Frame(self.mainframe, bg="#ffffff", relief=tk.SOLID, bd=2, highlightbackground="#e0e0e0", highlightthickness=1)
-        display_frame.grid(row=0, column=0, columnspan=2, pady=(0, 20), sticky="NSEW", padx=10)
-        display_frame.grid_propagate(False)
-        
-        # Main text label with modern styling
-        self.text = tk.Label(
-            display_frame,
-            text="Sample Text",
-            bg="#ffffff",
-            fg="#2c3e50",
-            font=("Helvetica", 36, "bold"),
-            wraplength=550,
-            justify="center"
+        self._configure_window()
+        self._build_layout()
+        self._setup_shortcuts()
+        self._apply_theme()
+
+    # ---- setup ---------------------------------------------------------- #
+
+    def _configure_window(self) -> None:
+        self.setWindowTitle(UIConfig.TITLE)
+        self.resize(UIConfig.WINDOW_WIDTH, UIConfig.WINDOW_HEIGHT)
+        self.setMinimumSize(UIConfig.MIN_WIDTH, UIConfig.MIN_HEIGHT)
+
+    def _build_layout(self) -> None:
+        central = QWidget(self)
+        self.setCentralWidget(central)
+
+        outer = QGridLayout(central)
+        outer.setContentsMargins(
+            UIConfig.MAIN_PADDING,
+            UIConfig.MAIN_PADDING,
+            UIConfig.MAIN_PADDING,
+            UIConfig.MAIN_PADDING,
         )
-        self.text.place(relx=0.5, rely=0.5, anchor="center")
 
-        # Section label for input
-        input_label = tk.Label(
-            self.mainframe,
-            text="Text Input",
-            bg="#ffffff",
-            fg="#34495e",
-            font=("Helvetica", 11, "bold")
+        # Main container frame
+        self.mainframe = QFrame(central)
+        outer.addWidget(self.mainframe, 0, 0)
+
+        layout = QGridLayout(self.mainframe)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.setColumnStretch(0, 3)
+        layout.setColumnStretch(1, 1)
+        layout.setRowStretch(0, 1)
+
+        pad = UIConfig.SECTION_PADDING
+
+        # --- Row 0: display area ----------------------------------------- #
+        self.display_frame = QFrame(self.mainframe)
+        layout.addWidget(self.display_frame, 0, 0, 1, 2)
+        layout.setContentsMargins(pad, pad, pad, pad)
+
+        display_layout = QGridLayout(self.display_frame)
+        display_layout.setContentsMargins(
+            UIConfig.DISPLAY_PADDING,
+            UIConfig.DISPLAY_PADDING,
+            UIConfig.DISPLAY_PADDING,
+            UIConfig.DISPLAY_PADDING,
         )
-        input_label.grid(row=1, column=0, sticky="W", padx=10, pady=(0, 5))
 
-        # Modern styled entry field
-        self.set_text_field = ttk.Entry(self.mainframe, font=("Helvetica", 12))
-        self.set_text_field.grid(row=2, column=0, pady=(0, 15), sticky="EW", padx=10)
+        self.text_font = QFont()
+        self.text_font.setPixelSize(UIConfig.TEXT_FONT_SIZE)
+        self.text_font.setWeight(UIConfig.TEXT_FONT_WEIGHT)
 
-        # Set text button with modern styling
-        self.set_text_button = tk.Button(
-            self.mainframe, 
-            text="Set Text", 
-            command=self.set_text,
-            bg="#3498db",
-            fg="white",
-            font=("Helvetica", 11, "bold"),
-            relief=tk.FLAT,
-            cursor="hand2",
-            padx=20,
-            pady=10,
-            activebackground="#2980b9",
-            activeforeground="white"
+        self.text_label = QLabel(UIConfig.TEXT_DEFAULT, self.display_frame)
+        self.text_label.setFont(self.text_font)
+        self.text_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.text_label.setWordWrap(True)
+        display_layout.addWidget(self.text_label, 0, 0)
+
+        # --- Row 1: input label ------------------------------------------ #
+        input_label = QLabel("Text Input", self.mainframe)
+        bold_label_font = QFont()
+        bold_label_font.setPixelSize(UIConfig.LABEL_FONT_SIZE)
+        bold_label_font.setWeight(QFont.Weight.Bold)
+        input_label.setFont(bold_label_font)
+        layout.addWidget(input_label, 1, 0, 1, 1, Qt.AlignmentFlag.AlignLeft)
+
+        # --- Row 2: text entry + set text button ------------------------- #
+        self.set_text_field = QLineEdit(self.mainframe)
+        self.set_text_field.setPlaceholderText("Enter text here...")
+        entry_font = QFont()
+        entry_font.setPixelSize(UIConfig.ENTRY_FONT_SIZE)
+        self.set_text_field.setFont(entry_font)
+        self.set_text_field.setFixedHeight(40)
+        self.set_text_field.returnPressed.connect(self.set_text)
+        layout.addWidget(self.set_text_field, 2, 0)
+
+        self.set_text_button = QPushButton("Set Text", self.mainframe)
+        self.set_text_button.setFixedHeight(40)
+        self.set_text_button.setStyleSheet(_btn_style("#3498db", "#2980b9"))
+        self.set_text_button.clicked.connect(self.set_text)
+        layout.addWidget(self.set_text_button, 2, 1)
+
+        # --- Row 3: color label ------------------------------------------ #
+        color_label = QLabel("Text Color", self.mainframe)
+        color_label.setFont(bold_label_font)
+        layout.addWidget(color_label, 3, 0, 1, 1, Qt.AlignmentFlag.AlignLeft)
+
+        # --- Row 4: color combo + set color button ----------------------- #
+        self.set_color_field = QComboBox(self.mainframe)
+        self.set_color_field.addItem("Select a color")
+        self.set_color_field.addItems(UIConfig.COLOR_OPTIONS)
+        combo_font = QFont()
+        combo_font.setPixelSize(UIConfig.ENTRY_FONT_SIZE)
+        self.set_color_field.setFont(combo_font)
+        self.set_color_field.setFixedHeight(40)
+        self.set_color_field.currentTextChanged.connect(self._on_color_selected)
+        layout.addWidget(self.set_color_field, 4, 0)
+
+        self.set_color_button = QPushButton("Set Color", self.mainframe)
+        self.set_color_button.setFixedHeight(40)
+        self.set_color_button.setStyleSheet(_btn_style("#9b59b6", "#8e44ad"))
+        self.set_color_button.clicked.connect(self.set_color)
+        layout.addWidget(self.set_color_button, 4, 1)
+
+        # --- Row 5: font size label + display ---------------------------- #
+        font_label = QLabel("Font Size", self.mainframe)
+        font_label.setFont(bold_label_font)
+        layout.addWidget(font_label, 5, 0, 1, 1, Qt.AlignmentFlag.AlignLeft)
+
+        self.font_size_display = QLabel(str(UIConfig.TEXT_FONT_SIZE), self.mainframe)
+        self.font_size_display.setFont(bold_label_font)
+        layout.addWidget(
+            self.font_size_display, 5, 1, 1, 1, Qt.AlignmentFlag.AlignRight
         )
-        self.set_text_button.grid(row=2, column=1, pady=(0, 15), padx=10, sticky="EW")
-        self.set_text_button.bind("<Enter>", lambda e: self.set_text_button.config(bg="#2980b9"))
-        self.set_text_button.bind("<Leave>", lambda e: self.set_text_button.config(bg="#3498db"))
 
-        # Section label for color
-        color_label = tk.Label(
-            self.mainframe,
-            text="Text Color",
-            bg="#ffffff",
-            fg="#34495e",
-            font=("Helvetica", 11, "bold")
-        )
-        color_label.grid(row=3, column=0, sticky="W", padx=10, pady=(0, 5))
+        # --- Row 6: font slider ----------------------------------------- #
+        self.font_slider = QSlider(Qt.Orientation.Horizontal, self.mainframe)
+        self.font_slider.setMinimum(UIConfig.SLIDER_MIN)
+        self.font_slider.setMaximum(UIConfig.SLIDER_MAX)
+        self.font_slider.setValue(UIConfig.TEXT_FONT_SIZE)
+        self.font_slider.setTickInterval(1)
+        self.font_slider.valueChanged.connect(self._on_font_size_change)
+        layout.addWidget(self.font_slider, 6, 0, 1, 2)
 
-        # Expanded color options with more modern colors
-        color_options = [
-            "Red", "Blue", "Green", "Black", "White",
-            "Purple", "Orange", "Pink", "Teal", "Navy",
-            "Coral", "Indigo", "Crimson", "Gold", "Silver"
+        # --- Row 7: reverse + undo -------------------------------------- #
+        self.reverse_button = QPushButton("Reverse Text", self.mainframe)
+        self.reverse_button.setFixedHeight(40)
+        self.reverse_button.setStyleSheet(_btn_style("#e74c3c", "#c0392b"))
+        self.reverse_button.clicked.connect(self.reverse)
+        layout.addWidget(self.reverse_button, 7, 0)
+
+        self.undo_button = QPushButton("Undo", self.mainframe)
+        self.undo_button.setFixedHeight(40)
+        self.undo_button.setStyleSheet(_btn_style("#555555", "#444444"))
+        self.undo_button.clicked.connect(self.undo)
+        layout.addWidget(self.undo_button, 7, 1)
+
+        # --- Row 8: reset + copy ----------------------------------------- #
+        self.reset_button = QPushButton("Reset", self.mainframe)
+        self.reset_button.setFixedHeight(40)
+        self.reset_button.setStyleSheet(_btn_style("#555555", "#444444"))
+        self.reset_button.clicked.connect(self.reset)
+        layout.addWidget(self.reset_button, 8, 0)
+
+        self.copy_button = QPushButton("Copy Text", self.mainframe)
+        self.copy_button.setFixedHeight(40)
+        self.copy_button.setStyleSheet(_btn_style("#27ae60", "#1e8449"))
+        self.copy_button.clicked.connect(self.copy_to_clipboard)
+        layout.addWidget(self.copy_button, 8, 1)
+
+        # --- Row 9: theme toggle ----------------------------------------- #
+        self.theme_button = QPushButton("Toggle Theme", self.mainframe)
+        self.theme_button.setFixedHeight(35)
+        self.theme_button.clicked.connect(self.toggle_theme)
+        layout.addWidget(self.theme_button, 9, 0, 1, 2)
+
+    def _setup_shortcuts(self) -> None:
+        shortcuts: list[tuple[str, object]] = [
+            ("Alt+T", self.set_text),
+            ("Alt+C", self.focus_color_dropdown),
+            ("Alt+R", self.reverse),
+            ("Alt+U", self.undo),
+            ("Alt+X", self.reset),
+            ("Alt+Y", self.copy_to_clipboard),
+            ("Escape", self._clear_focus),
         ]
-        
-        # Style for combobox
-        style = ttk.Style()
-        style.theme_use('clam')
-        style.configure('Modern.TCombobox', fieldbackground='white', background='white', foreground='#2c3e50')
-        
-        self.set_color_field = ttk.Combobox(
-            self.mainframe, 
-            values=color_options, 
-            font=("Helvetica", 12),
-            state="readonly",
-            style='Modern.TCombobox'
+        for key, callback in shortcuts:
+            shortcut = QShortcut(QKeySequence(key), self)
+            shortcut.activated.connect(callback)  # type: ignore[arg-type]
+
+    # ---- theming -------------------------------------------------------- #
+
+    def _apply_theme(self) -> None:
+        app = QApplication.instance()
+        assert isinstance(app, QApplication)
+
+        palette = DARK_PALETTE if self._is_dark else LIGHT_PALETTE
+        app.setPalette(palette)
+
+        # Display frame
+        self.display_frame.setStyleSheet(
+            DISPLAY_FRAME_DARK if self._is_dark else DISPLAY_FRAME_LIGHT
         )
-        self.set_color_field.grid(row=4, column=0, sticky="EW", pady=(0, 15), padx=10)
-        self.set_color_field.set("Select a color")
 
-        # Set color button
-        self.set_color_button = tk.Button(
-            self.mainframe, 
-            text="Set Color", 
-            command=self.set_color,
-            bg="#9b59b6",
-            fg="white",
-            font=("Helvetica", 11, "bold"),
-            relief=tk.FLAT,
-            cursor="hand2",
-            padx=20,
-            pady=10,
-            activebackground="#8e44ad",
-            activeforeground="white"
-        )
-        self.set_color_button.grid(row=4, column=1, pady=(0, 15), padx=10, sticky="EW")
-        self.set_color_button.bind("<Enter>", lambda e: self.set_color_button.config(bg="#8e44ad"))
-        self.set_color_button.bind("<Leave>", lambda e: self.set_color_button.config(bg="#9b59b6"))
+        # Entry
+        if self._is_dark:
+            entry_ss = ENTRY_STYLE.format(
+                border="#444444",
+                font_size=UIConfig.ENTRY_FONT_SIZE,
+                bg="#2b2b2b",
+                fg="#e0e0e0",
+            )
+        else:
+            entry_ss = ENTRY_STYLE.format(
+                border="#cccccc",
+                font_size=UIConfig.ENTRY_FONT_SIZE,
+                bg="#ffffff",
+                fg="#1a1a1a",
+            )
+        self.set_text_field.setStyleSheet(entry_ss)
 
-        # Reverse text button - full width
-        self.reverse_button = tk.Button(
-            self.mainframe, 
-            text="🔄 Reverse Text", 
-            command=self.reverse,
-            bg="#e74c3c",
-            fg="white",
-            font=("Helvetica", 11, "bold"),
-            relief=tk.FLAT,
-            cursor="hand2",
-            padx=20,
-            pady=12,
-            activebackground="#c0392b",
-            activeforeground="white"
-        )
-        self.reverse_button.grid(row=5, column=0, columnspan=2, sticky="EW", pady=(5, 0), padx=10)
-        self.reverse_button.bind("<Enter>", lambda e: self.reverse_button.config(bg="#c0392b"))
-        self.reverse_button.bind("<Leave>", lambda e: self.reverse_button.config(bg="#e74c3c"))
-        
-        self.root.mainloop()
-        return
+        # Combo box
+        if self._is_dark:
+            combo_ss = COMBO_STYLE.format(
+                border="#444444",
+                font_size=UIConfig.ENTRY_FONT_SIZE,
+                bg="#2b2b2b",
+                fg="#e0e0e0",
+            )
+        else:
+            combo_ss = COMBO_STYLE.format(
+                border="#cccccc",
+                font_size=UIConfig.ENTRY_FONT_SIZE,
+                bg="#ffffff",
+                fg="#1a1a1a",
+            )
+        self.set_color_field.setStyleSheet(combo_ss)
 
-    # functions to perform the button actions: set text, set color, reverse text
-    def set_text(self):
-        new_text = self.set_text_field.get()
-        self.text.config(text=new_text)
+        # Slider
+        groove = "#444444" if self._is_dark else "#cccccc"
+        self.font_slider.setStyleSheet(SLIDER_STYLE % {"groove": groove})
 
-    def set_color(self):
-        new_color = self.set_color_field.get()
-        self.text.config(foreground=new_color)
+        # Theme toggle button
+        if self._is_dark:
+            theme_ss = THEME_BUTTON_STYLE.format(
+                border="#555555", fg="#e0e0e0", hover_bg="#333333"
+            )
+        else:
+            theme_ss = THEME_BUTTON_STYLE.format(
+                border="#cccccc", fg="#1a1a1a", hover_bg="#e0e0e0"
+            )
+        self.theme_button.setStyleSheet(theme_ss)
 
-    def reverse(self):
-        new_text = self.text.cget("text")
-        reverse_text = new_text[::-1]
-        self.text.config(text=reverse_text)
+    def toggle_theme(self) -> None:
+        try:
+            self._is_dark = not self._is_dark
+            self._apply_theme()
+        except Exception:
+            logger.exception("Error toggling theme")
+
+    # ---- callbacks ------------------------------------------------------ #
+
+    def _clear_focus(self) -> None:
+        self.setFocus()
+
+    def focus_color_dropdown(self) -> None:
+        self.set_color_field.showPopup()
+
+    def _on_color_selected(self, text: str) -> None:
+        if text and text != "Select a color":
+            self.set_color()
+
+    def _on_font_size_change(self, value: int) -> None:
+        try:
+            self.font_size_display.setText(str(value))
+            self.text_font.setPixelSize(value)
+            self.text_label.setFont(self.text_font)
+        except Exception:
+            logger.exception("Error updating font size")
+
+    # ---- text operations ------------------------------------------------ #
+
+    def _push_history(self, value: str) -> None:
+        if value:
+            self.text_history.append(value)
+
+    def _set_text(self, value: str, *, record_history: bool = True) -> None:
+        current_text = self.text_label.text()
+        if record_history and value != current_text:
+            self._push_history(current_text)
+        self.text_label.setText(value)
+
+    def set_text(self) -> None:
+        try:
+            new_text = self.set_text_field.text().strip()
+            if new_text:
+                self._set_text(new_text)
+                self.set_text_field.clear()
+        except Exception:
+            logger.exception("Error setting text")
+
+    def set_color(self) -> None:
+        try:
+            new_color = self.set_color_field.currentText().lower()
+            if new_color and new_color != "select a color":
+                self.text_label.setStyleSheet(f"color: {new_color};")
+        except Exception:
+            logger.exception("Error setting color")
+
+    def reverse(self) -> None:
+        try:
+            current_text = self.text_label.text()
+            self._set_text(current_text[::-1])
+        except Exception:
+            logger.exception("Error reversing text")
+
+    def undo(self) -> None:
+        try:
+            if not self.text_history:
+                return
+            previous = self.text_history.pop()
+            self._set_text(previous, record_history=False)
+        except Exception:
+            logger.exception("Error undoing text")
+
+    def reset(self) -> None:
+        try:
+            self._set_text(UIConfig.TEXT_DEFAULT)
+            self.text_label.setStyleSheet("")
+            self.font_slider.setValue(UIConfig.TEXT_FONT_SIZE)
+            self.set_color_field.setCurrentIndex(0)
+        except Exception:
+            logger.exception("Error resetting UI")
+
+    def copy_to_clipboard(self) -> None:
+        try:
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setText(self.text_label.text())
+        except Exception:
+            logger.exception("Error copying text to clipboard")
 
 
-if __name__ != "__main__":
-    pass
-else:
-    App()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = App()
+    window.show()
+    sys.exit(app.exec())
